@@ -1,4 +1,5 @@
 #include "logger.h"
+#include <cassert>
 #include <fstream>
 #include <iostream>
 
@@ -18,6 +19,9 @@ namespace helpers{
             
             case log_level::warning:
                 return "WARNING";
+            
+            default:
+                return "INFO";
         }
     }
 }
@@ -35,8 +39,12 @@ logger logger::get_logger()
     static logger singleton;
     if (!singleton.impl_)
     {
-        auto impl = std::make_shared<logger_impl>();
+        auto impl = std::make_shared<logger::logger_impl>();
         impl->stream.open("log.txt", std::ios_base::app);
+        if (!impl->stream.is_open())
+        {
+            throw std::runtime_error{"Cannot open the log file"};
+        }
         singleton.impl_ = impl;
     }
     return singleton;
@@ -44,6 +52,7 @@ logger logger::get_logger()
 
 void logger::write(log_level level, const std::string &msg) const
 {
+    assert(impl_);
     if (level > impl_->level)
         return;
     
@@ -57,10 +66,12 @@ void logger::write(log_level level, const std::string &msg) const
 
 log_level logger::get_level() const
 {
+    assert(impl_);
     return impl_->level;
 }
 
 void logger::set_level(log_level level)
 {
+    assert(impl_);
     impl_->level = level;
 }

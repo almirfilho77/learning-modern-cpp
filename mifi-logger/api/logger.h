@@ -1,6 +1,10 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <sstream>
+
+#include <iostream>
 
 namespace helpers {
 
@@ -40,4 +44,34 @@ namespace helpers {
         std::shared_ptr<logger_impl> impl_;
 
     };
+}
+
+namespace details {
+    template<typename MessagePart>
+    inline void stream_parts(std::stringstream &stream, const MessagePart &msg_part)
+    {
+        stream << " " << msg_part;
+    }
+
+    template<typename MessagePart, typename... MessageParts>
+    inline void stream_parts(std::stringstream &stream, 
+        const MessagePart &msg_part,
+        const MessageParts &...more_parts)
+    {
+        stream << " " << msg_part;
+        stream_parts(stream, more_parts...);
+    }
+}
+
+template<typename... MessageParts>
+inline void write_log(helpers::logger &logger, helpers::log_level level, const MessageParts &...msg_parts)
+{
+    if (level > logger.get_level())
+    {
+        return;
+    }
+
+    std::stringstream s;
+    details::stream_parts(s, msg_parts...);
+    logger.write(level, s.str());
 }
